@@ -9,7 +9,7 @@ stellar-dynpsk is a small tool to generate a new PSK for a given SSID on Stellar
  
 ## Example
 
-```python
+```
 $ python stellar-dynpsk.py 
 
 Stellar DynPSK - a simple PSK changer for Stellar Wireless SSIDs
@@ -28,7 +28,7 @@ This is free software not provided/shipped by Alcatel-Lucent Enterprise. Use it 
 [+] Scan the above QR Code with your mobile phone and login to the network!
 ```
 
-## Things to consider
+## Things to consider for the future
 - Introduce some data structure to generate the PSK & send information a few days before the PSK is actually changed
 - Implement a function to send this as mail to a given address
 - Expand this kind of functionality to Stellar Wireless Express mode
