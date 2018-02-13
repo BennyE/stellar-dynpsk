@@ -1,0 +1,9 @@
+{
+	"ov_hostname": "omnivista.example.com",
+	"ov_username": "admin",
+	"ov_password": "switch",
+	"validate_https_certificate": "yes",
+	"ap_group": "ap-group-name-case-sensitive",
+	"ssid": "ssid-name",
+	"psk_length": 12
+}
