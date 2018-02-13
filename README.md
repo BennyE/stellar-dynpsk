@@ -5,7 +5,7 @@ stellar-dynpsk is a small tool to generate a new PSK for a given SSID on Stellar
 - requests (Thanks to Kenneth Reitz - http://www.python-requests.org/)
 - pyqrcode (Thanks to Michael Nooner - https://github.com/mnooner256/pyqrcode)
 - Python3.5 (This is what comes with my Debian release, no support for Python 2.x)
-- A separate system to run this code, as you can host this on Alcatel-Lucent Enterprise OmniVista 2500 today
+- A separate system to run this code, as you can't host this on Alcatel-Lucent Enterprise OmniVista 2500 today
  
 ## Example
 
