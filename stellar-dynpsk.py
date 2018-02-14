@@ -27,8 +27,6 @@ except ImportError as ie:
 import json
 import random
 import urllib3
-import os
-import time
 
 #
 # Functions
@@ -235,7 +233,7 @@ margin-left: 15px;
 <p>der Pre-Shared Key (PSK) f&uuml;r das WLAN <b>{0}</b> hat sich soeben ge&auml;ndert.</p>
 
 <p>Mit dem folgenden QR Code f&auml;llt die Verbindung mit dem WLAN leichter:</p>
-<p><img src="cid:image2" height="120px"></p>
+<p><img src="cid:image2_{1}" height="120px"></p>
 
 <p>Der neue PSK lautet: <b>{1}</b></p>
 <p>
@@ -394,7 +392,7 @@ margin-left: 15px;
 <p>the pre-shared key (PSK) for the SSID <b>{0}</b> has just been changed.</p>
 
 <p>You may scan the following QR code with your mobile phone to ease the connection process:</p>
-<p><img src="cid:image2" height="120px"></p>
+<p><img src="cid:image2_{1}" height="120px"></p>
 
 <p>This is the new PSK: <b>{1}</b></p>
 <p>
@@ -426,7 +424,8 @@ The ALE Stellar Wireless Team
     fp.close()
 
     # Define the image's ID as referenced above
-    msgImage.add_header('Content-ID', '<image2>')
+    # Avoid that the mail client can cache a previous QR code by giving a custom name
+    msgImage.add_header('Content-ID', '<image2_{0}>'.format(new_psk))
     msgRoot.attach(msgImage)
 
     # Stellar Logo
@@ -648,13 +647,9 @@ else:
 pskqr = pyqrcode.create("WIFI:T:WPA/WPA2;S:{0};P:{1};;".format(ssid, new_psk))
 if send_psk_via_mail == "yes":
     pskqr.png("logos/qrcode.png", scale=8)
-    # Give the above png generation some time
-    time.sleep(2)
     send_mail(email_from, email_to, ssid, new_psk, language,
             smtp_server, smtp_auth, smtp_port, smtp_password)
     print("[+] Scan the QR Code sent via mail with your mobile phone and login to the network!")
-    # Delete the qrcode image, so that we never send out an old one
-    os.unlink("logos/qrcode.png")
 else:
     print(pskqr.terminal())
     print("[+] Scan the above QR Code with your mobile phone and login to the network!")
