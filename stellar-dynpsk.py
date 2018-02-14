@@ -32,6 +32,428 @@ import json
 import random
 import urllib3
 
+#
+# Functions
+#
+
+def send_mail(email_from, email_to, ssid_name, new_psk, language,
+                smtp_server, smtp_auth, smtp_port, smtp_password):
+
+    # Send an HTML email with an embedded image and a plain text message for
+    # email clients that don't want to display the HTML.
+
+    #from email.MIMEMultipart import MIMEMultipart
+    #from email.MIMEText import MIMEText
+    #from email.MIMEImage import MIMEImage
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    from email.mime.image import MIMEImage
+
+    # Define these once; use them twice!
+    strFrom = email_from
+    strTo = email_to
+
+    # Create the root message and fill in the from, to, and subject headers
+    msgRoot = MIMEMultipart('related')
+    if language == "de":
+        msgRoot['Subject'] = "Neuer Pre-Shared Key (PSK) fuer SSID: {0}".format(ssid_name)
+    else:
+        msgRoot['Subject'] = "New pre-shared key (PSK) for SSID: {0}".format(ssid_name)
+    msgRoot['From'] = strFrom
+    msgRoot['To'] = strTo
+    msgRoot.preamble = 'This is a multi-part message in MIME format.'
+
+    # Encapsulate the plain and HTML versions of the message body in an
+    # 'alternative' part, so message agents can decide which they want to display.
+    msgAlternative = MIMEMultipart('alternative')
+    msgRoot.attach(msgAlternative)
+
+    if language == "de":
+        msgText = MIMEText("""
+Hallo,
+
+soeben hat sich der Pre-Shared Key (PSK) fuer das WLAN \"{0}\" geaendert.
+Der neue PSK lautet: {1}
+
+Bis bald!
+        """.format(ssid_name, new_psk))
+    else:
+        msgText = MIMEText("""
+Hi,
+
+we just changed our pre-shared key (PSK) for SSID \"{0}\".
+The new PSK for this network is: {1}
+
+Cheers!
+        """.format(ssid_name, new_psk))
+
+    msgAlternative.attach(msgText)
+
+    if language == "de":
+        mail_content = """
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<style>
+body {{
+background-color: #ebebeb;
+width: 800px;
+margin: 0 auto;
+padding-top: 20px;
+padding-bottom: 60px;
+font-family: "HelveticaNeueLight", "HelveticaNeue-Light", "Helvetica Neue Light", "HelveticaNeue", "Helvetica Neue", 'TeXGyreHerosRegular', "Helvetica", "Tahoma", "Geneva", "Arial", sans-serif; font-weight:300; font-stretch:normal;
+}}
+
+a {{
+color: #2e9ec9;
+}}
+
+h2 {{
+font-family: Georgia;
+font-weight: normal;
+font-size: 80px;
+margin-bottom: 20px;
+}}
+
+li b {{
+font-weight: bold;
+}}
+
+h2 a {{
+text-decoration: none;
+color: #444444;
+text-shadow: 1px 1px 0px white;
+}}
+
+h3 {{
+font-family: Georgia;
+font-size: 24px;
+color: #444444;
+text-shadow: 1px 1px 0px white;
+}}
+
+ul {{
+margin-left: 0px;
+margin-bottom: 40px;
+padding-left: 0px;
+}}
+
+ul>li {{
+font-size: 16px;
+line-height: 1.4em;
+list-style-type: none;
+position: relative;
+margin-bottom: 20px;
+padding-left: 40px;
+padding-top: 40px;
+padding-right: 40px;
+padding-bottom: 60px;
+background: #fff;
+color: #444444;
+-webkit-box-shadow:0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+-moz-box-shadow:0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+box-shadow:0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+}}
+
+li li {{
+padding: 10px 10px 0px 5px;
+font-size: 16px;
+margin-bottom: 0px;
+margin-left: 25px;
+list-style-type: disc;
+list-style-position: outside;
+-webkit-box-shadow: none;
+-moz-box-shadow: none;
+box-shadow: none;
+}}
+
+ul>li:before, ul>li:after {{
+content:"";
+position:absolute;
+z-index:-2;
+}}
+
+body > ul > li > a:first-child {{
+position: absolute;
+bottom: 30px;
+right: 40px;
+font-family: Georgia;
+font-size: 12px;
+}}
+
+body > ul > li > a:first-child::before {{
+font-size: 100%;
+content: "Permalink: ";
+}}
+
+blockquote {{
+font-family: Georgia;
+font-style: italic;
+padding-left: 10px;
+margin-left: 20px;
+}}
+
+/* For Screens smaller than 800px width. Smaller margins on boxes and flexible widths */
+
+@media only screen and (max-width: 800px){{
+body {{
+padding: 5px;
+width: 93%;
+margin: 0 auto;
+}}
+
+h2 {{
+font-size: 50px;
+margin-bottom: 20px;
+}}
+               
+ul {{
+margin-left: 0px;
+margin-bottom: 20px;
+padding-left: 0px;
+}}
+                          
+ul>li {{
+margin-bottom: 15px;
+padding: 25px 25px 50px 25px;
+}}
+
+blockquote {{
+padding-left: 0;
+margin-left: 15px;
+}}
+}}
+</style>
+</head><body>
+
+<p></p>
+
+<ul>
+<li>
+<p><a href="https://www.al-enterprise.com/"><img src="cid:image1" height="60px"></a>
+<a href="https://www.al-enterprise.com/"><img src="cid:image3" height="75px"></a>
+</p>
+<p>Hallo,</p>
+
+<p>der Pre-Shared Key (PSK) f&uuml;r das WLAN <b>{0}</b> hat sich soeben ge&auml;ndert.</p>
+
+<p>Mit dem folgenden QR Code f&auml;llt die Verbindung mit dem WLAN leichter:</p>
+<p><img src="cid:image2" height="120px"></p>
+
+<p>Der neue PSK lautet: <b>{1}</b></p>
+<p>
+Danke und Gru&szlig;,<br>
+Ihr ALE Stellar Wireless Team
+</p>
+</li>
+</ul>
+</body></html>
+    """.format(ssid_name, new_psk)
+    else:
+        mail_content = """
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<style>
+body {{
+background-color: #ebebeb;
+width: 800px;
+margin: 0 auto;
+padding-top: 20px;
+padding-bottom: 60px;
+font-family: "HelveticaNeueLight", "HelveticaNeue-Light", "Helvetica Neue Light", "HelveticaNeue", "Helvetica Neue", 'TeXGyreHerosRegular', "Helvetica", "Tahoma", "Geneva", "Arial", sans-serif; font-weight:300; font-stretch:normal;
+}}
+
+a {{
+color: #2e9ec9;
+}}
+
+h2 {{
+font-family: Georgia;
+font-weight: normal;
+font-size: 80px;
+margin-bottom: 20px;
+}}
+
+li b {{
+font-weight: bold;
+}}
+
+h2 a {{
+text-decoration: none;
+color: #444444;
+text-shadow: 1px 1px 0px white;
+}}
+
+h3 {{
+font-family: Georgia;
+font-size: 24px;
+color: #444444;
+text-shadow: 1px 1px 0px white;
+}}
+
+ul {{
+margin-left: 0px;
+margin-bottom: 40px;
+padding-left: 0px;
+}}
+
+ul>li {{
+font-size: 16px;
+line-height: 1.4em;
+list-style-type: none;
+position: relative;
+margin-bottom: 20px;
+padding-left: 40px;
+padding-top: 40px;
+padding-right: 40px;
+padding-bottom: 60px;
+background: #fff;
+color: #444444;
+-webkit-box-shadow:0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+-moz-box-shadow:0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+box-shadow:0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+}}
+
+li li {{
+padding: 10px 10px 0px 5px;
+font-size: 16px;
+margin-bottom: 0px;
+margin-left: 25px;
+list-style-type: disc;
+list-style-position: outside;
+-webkit-box-shadow: none;
+-moz-box-shadow: none;
+box-shadow: none;
+}}
+
+ul>li:before, ul>li:after {{
+content:"";
+position:absolute;
+z-index:-2;
+}}
+
+body > ul > li > a:first-child {{
+position: absolute;
+bottom: 30px;
+right: 40px;
+font-family: Georgia;
+font-size: 12px;
+}}
+
+body > ul > li > a:first-child::before {{
+font-size: 100%;
+content: "Permalink: ";
+}}
+
+blockquote {{
+font-family: Georgia;
+font-style: italic;
+padding-left: 10px;
+margin-left: 20px;
+}}
+
+/* For Screens smaller than 800px width. Smaller margins on boxes and flexible widths */
+
+@media only screen and (max-width: 800px){{
+body {{
+padding: 5px;
+width: 93%;
+margin: 0 auto;
+}}
+
+h2 {{
+font-size: 50px;
+margin-bottom: 20px;
+}}
+               
+ul {{
+margin-left: 0px;
+margin-bottom: 20px;
+padding-left: 0px;
+}}
+                          
+ul>li {{
+margin-bottom: 15px;
+padding: 25px 25px 50px 25px;
+}}
+
+blockquote {{
+padding-left: 0;
+margin-left: 15px;
+}}
+}}
+</style>
+</head><body>
+
+<p></p>
+
+<ul>
+<li>
+<p><a href="https://www.al-enterprise.com/"><img src="cid:image1" height="60px"></a>
+<a href="https://www.al-enterprise.com/"><img src="cid:image3" height="75px"></a>
+</p>
+<p>Hi,</p>
+
+<p>the pre-shared key (PSK) for the SSID <b>{0}</b> has just been changed.</p>
+
+<p>You may scan the following QR code with your mobile phone to ease the connection process:</p>
+<p><img src="cid:image2" height="120px"></p>
+
+<p>This is the new PSK: <b>{1}</b></p>
+<p>
+Thanks,
+Regards,<br>
+The ALE Stellar Wireless Team
+</p>
+</li>
+</ul>
+</body></html>
+    """.format(ssid_name, new_psk)
+
+    # We reference the image in the IMG SRC attribute by the ID we give it below
+    msgText = MIMEText(mail_content, 'html')
+    msgAlternative.attach(msgText)
+
+    # ALE Logo
+    fp = open('logos/al_enterprise_bk_50mm.png', 'rb')
+    msgImage = MIMEImage(fp.read())
+    fp.close()
+
+    # Define the image's ID as referenced above
+    msgImage.add_header('Content-ID', '<image1>')
+    msgRoot.attach(msgImage)
+
+    # QR Code
+    fp = open('logos/qrcode.png', 'rb')
+    msgImage = MIMEImage(fp.read())
+    fp.close()
+
+    # Define the image's ID as referenced above
+    msgImage.add_header('Content-ID', '<image2>')
+    msgRoot.attach(msgImage)
+
+    # Stellar Logo
+    fp = open('logos/stellar-logo.png', 'rb')
+    msgImage = MIMEImage(fp.read())
+    fp.close()
+
+    # Define the image's ID as referenced above
+    msgImage.add_header('Content-ID', '<image3>')
+    msgRoot.attach(msgImage)
+
+    # Send the email
+    import smtplib
+    smtp = smtplib.SMTP()
+    smtp.set_debuglevel(0)
+    smtp.connect("{0}:{1}".format(smtp_server, smtp_port))
+
+    if smtp_auth == "yes":
+        smtp.ehlo()
+        smtp.starttls()
+        smtp.login(email_from, smtp_password)
+        result = smtp.sendmail(strFrom, strTo, msgRoot.as_string())
+    else:
+        result = smtp.sendmail(strFrom, strTo, msgRoot.as_string())
+
 print("\nStellar DynPSK - a simple PSK changer for Stellar Wireless SSIDs")
 print("Written by Benny Eggerstedt in 2018")
 print("This is free software not provided/shipped by Alcatel-Lucent Enterprise. Use it at your own risk!\n")
@@ -48,6 +470,14 @@ try:
         ap_group = settings["ap_group"]
         ssid = settings["ssid"]
         psk_length = settings["psk_length"]
+        send_psk_via_mail = settings["send_psk_via_mail"]
+        email_from = settings["email_from"]
+        smtp_server = settings["smtp_server"]
+        smtp_auth = settings["smtp_auth"]
+        smtp_port = settings["smtp_port"]
+        smtp_password = settings["smtp_password"]
+        language = settings["language"]
+        email_to = settings["email_to"]
 except IOError as ioe:
     print(ioe)
     sys.exit("ERROR: Couldn't find/open settings.json file!")
@@ -218,7 +648,11 @@ else:
 # Generate a QR code to login to this SSID
 # QR format: "WIFI:T:WPA;S:SSID;P:PSK;;"
 pskqr = pyqrcode.create("WIFI:T:WPA/WPA2;S:{0};P:{1};;".format(ssid, new_psk))
-print(pskqr.terminal())
-
-print("[+] Scan the above QR Code with your mobile phone and login to the network!")
-
+if send_psk_via_mail == "yes":
+    pskqr.png("logos/qrcode.png", scale=8)
+    send_mail(email_from, email_to, ssid, new_psk, language,
+            smtp_server, smtp_auth, smtp_port, smtp_password)
+    print("[+] Scan the QR Code sent via mail with your mobile phone and login to the network!")
+else:
+    print(pskqr.terminal())
+    print("[+] Scan the above QR Code with your mobile phone and login to the network!")

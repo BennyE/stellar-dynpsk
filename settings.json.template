@@ -5,5 +5,13 @@
 	"validate_https_certificate": "yes",
 	"ap_group": "ap-group-name-case-sensitive",
 	"ssid": "ssid-name",
-	"psk_length": 12
+	"psk_length": 12,
+        "send_psk_via_mail": "yes",
+        "email_from": "yourmailFROMaddress@mailprovider.com",
+        "smtp_server": "smtp.gmail.com",
+        "smtp_auth": "yes",
+        "smtp_port": 587,
+        "smtp_password": "passwordforsmtp",
+        "language": "de",
+        "email_to": "yourmailTOaddress@mailprovider.com"
 }
