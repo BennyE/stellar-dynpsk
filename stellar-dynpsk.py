@@ -7,12 +7,8 @@
 #
 
 # TODO
-# - Ensure that .gitignore is set up :)
 # - Figure out a good way to log the outcome (logger module maybe)
-# - Send a mail when done (also read details from config file)
 # - Find out if any other user than "admin" can use the RESTful API of OmniVista v4.2.2 in read-only mode to get APs
-# - Don't forget to leverage the http/https choice for contacting the APs!
-# - Generate QR code for mail
 # - Potentially support multiple AP-Groups, but it would be simpler to just run the script for each group
 
 #
@@ -31,6 +27,8 @@ except ImportError as ie:
 import json
 import random
 import urllib3
+import os
+import time
 
 #
 # Functions
@@ -650,9 +648,13 @@ else:
 pskqr = pyqrcode.create("WIFI:T:WPA/WPA2;S:{0};P:{1};;".format(ssid, new_psk))
 if send_psk_via_mail == "yes":
     pskqr.png("logos/qrcode.png", scale=8)
+    # Give the above png generation some time
+    time.sleep(2)
     send_mail(email_from, email_to, ssid, new_psk, language,
             smtp_server, smtp_auth, smtp_port, smtp_password)
     print("[+] Scan the QR Code sent via mail with your mobile phone and login to the network!")
+    # Delete the qrcode image, so that we never send out an old one
+    os.unlink("logos/qrcode.png")
 else:
     print(pskqr.terminal())
     print("[+] Scan the above QR Code with your mobile phone and login to the network!")
