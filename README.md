@@ -4,7 +4,7 @@ stellar-dynpsk is a small tool to generate a new PSK for a given SSID on Stellar
 ## Dependencies
 - requests (Thanks to Kenneth Reitz - http://www.python-requests.org/)
 - pyqrcode (Thanks to Michael Nooner - https://github.com/mnooner256/pyqrcode)
-- pypng (Thanks to - )
+- pypng (Thanks to David Jones - https://pythonhosted.org/pypng/)
 - Python3.5 (This is what comes with my Debian release, no support for Python 2.x)
 - A separate system to run this code, as you can't host this on Alcatel-Lucent Enterprise OmniVista 2500 today
  
@@ -53,5 +53,4 @@ Edit the **settings.json.template** and save it as **settings.json**
 
 ## Things to consider for the future
 - Introduce some data structure to generate the PSK & send information a few days before the PSK is actually changed
-- Implement a function to send this as mail to a given address
 - Expand this kind of functionality to Stellar Wireless Express mode
