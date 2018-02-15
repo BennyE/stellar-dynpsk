@@ -28,6 +28,10 @@ This is free software not provided/shipped by Alcatel-Lucent Enterprise. Use it 
 
 [+] Scan the above QR Code with your mobile phone and login to the network!
 ```
+
+## Demo Video
+[![Demo Video](https://img.youtube.com/vi/cx0n13rECW0/0.jpg)](https://www.youtube.com/watch?v=cx0n13rECW0)
+
 ## Usage
 
 Edit the **settings.json.template** and save it as **settings.json**
