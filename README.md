@@ -20,13 +20,10 @@ This is free software not provided/shipped by Alcatel-Lucent Enterprise. Use it 
 [+] Reading settings.json file
 [*] Attempting to connect to OmniVista server @ https://omnivista.home
 [*] Connection to omnivista.home successful!
-[*] Found instanceID 59ab1cb7e4b010f83b3d47f0 for AP group Home
-[*] Found deviceId 5a7d02b6e4b0582ec054a882 for SSID dynpsk
-[+] Changed the PSK of SSID dynpsk to: 6nVjc9xJXtHn
-
-(Here comes some QR CODE)
-
-[+] Scan the above QR Code with your mobile phone and login to the network!
+[*] DeviceConfig: Found instanceID 59ab1cb7e4b010f83b3d47f0 for AP group Home
+[*] DeviceConfig: Found deviceId 5a7d02b6e4b0582ec054a882 for SSID dynpsk
+[+] DeviceConfig: Changed the PSK of SSID dynpsk to: lxrz9qwIL9hM
+[+] Scan the QR Code sent via mail with your mobile phone and login to the network!
 ```
 
 ## Demo Video
@@ -43,7 +40,7 @@ Edit the **settings.json.template** and save it as **settings.json**
         "validate_https_certificate": "yes",		# Validate the HTTPS certificate?
         "ap_group": "ap-group-name-case-sensitive",	# AP-Group of APs that you want to update (case-sensitive!)
         "ssid": "ssid-name",				# Name of the SSID on which you want to update the PSK
-        "psk_length": 12				# The length of the PSK to generate
+        "psk_length": 12,				# The length of the PSK to generate
         "send_psk_via_mail": "yes",			# If you want to send a mail with the PSK/QR Code
         "email_from": "FROMaddress@mailprovider.com",	# mailFrom
         "smtp_server": "smtp.gmail.com",		# SMTP server
