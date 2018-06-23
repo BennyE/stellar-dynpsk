@@ -20,9 +20,9 @@ This is free software not provided/shipped by Alcatel-Lucent Enterprise. Use it 
 [+] Reading settings.json file
 [*] Attempting to connect to OmniVista server @ https://omnivista.home
 [*] Connection to omnivista.home successful!
-[*] DeviceConfig: Found instanceID 59ab1cb7e4b010f83b3d47f0 for AP group Home
-[*] DeviceConfig: Found deviceId 5a7d02b6e4b0582ec054a882 for SSID dynpsk
-[+] DeviceConfig: Changed the PSK of SSID dynpsk to: lxrz9qwIL9hM
+[*] Found instanceID 59ab1cb7e4b010f83b3d47f0 for AP group Home
+[*] Found deviceId 5a7d02b6e4b0582ec054a882 for SSID dynpsk
+[+] Changed the PSK of SSID dynpsk to: lxrz9qwIL9hM
 [+] Scan the QR Code sent via mail with your mobile phone and login to the network!
 ```
 
