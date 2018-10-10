@@ -485,7 +485,7 @@ except TypeError as te:
 
 # Try to initialise a random seed. If urandom() is not available on the system, this script will fail
 # If we don't fail, this will generate the new PSK
-letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz"
+letters = "ABCDEFGHJKMNPQRSTUVWXYZ23456789abcdefghijkmnopqrstuvwxyz"
 try:
     r = random.SystemRandom()
 except NotImplementedError as nie:
