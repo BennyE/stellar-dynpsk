@@ -466,6 +466,7 @@ try:
         validate_https_certificate = settings["validate_https_certificate"]
         ap_group = settings["ap_group"]
         ssid = settings["ssid"]
+        encr = settings["encryption"]
         psk_length = settings["psk_length"]
         send_psk_via_mail = settings["send_psk_via_mail"]
         email_from = settings["email_from"]
@@ -644,7 +645,7 @@ else:
 
 # Generate a QR code to login to this SSID
 # QR format: "WIFI:T:WPA;S:SSID;P:PSK;;"
-pskqr = pyqrcode.create("WIFI:T:WPA/WPA2;S:{0};P:{1};;".format(ssid, new_psk))
+pskqr = pyqrcode.create("WIFI:T:{0};S:{1};P:{2};;".format(encr, ssid, new_psk))
 if send_psk_via_mail == "yes":
     pskqr.png("logos/qrcode.png", scale=8)
     send_mail(email_from, email_to, ssid, new_psk, language,
