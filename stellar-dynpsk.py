@@ -464,7 +464,7 @@ try:
         ov_username = settings["ov_username"]
         ov_password = settings["ov_password"]
         validate_https_certificate = settings["validate_https_certificate"]
-        ap_group = settings["ap_group"]
+        ap_groups = settings["ap_groups"]
         ssid = settings["ssid"]
         encr = settings["encryption"]
         psk_length = settings["psk_length"]
@@ -565,84 +565,85 @@ else:
 # As we want to change the configuraton LIVE, we need to work on "device config" and not the "template" in OmniVista.
 # To do that we first POST to the following URL and retrieve a bunch of instance IDs with the goal to find our AP group
 # https://omnivista.home/api/ag/deviceconfig/devices
+for ap_group in ap_groups:
+    print("[*] Working on AP GROUP {0}...".format(ap_group))
+    dc_post = {"AGRequestObject":{"objectType":"WLANService","others":{"deviceType":"AP_GROUP"}}}
 
-dc_post = {"AGRequestObject":{"objectType":"WLANService","others":{"deviceType":"AP_GROUP"}}}
+    dc_list = req.post("https://{0}/api/ag/deviceconfig/devices".format(ov_hostname),
+                      headers=ov_header,
+                      json=dc_post,
+                      verify=check_certs)
 
-dc_list = req.post("https://{0}/api/ag/deviceconfig/devices".format(ov_hostname),
-                  headers=ov_header,
-                  json=dc_post,
-                  verify=check_certs)
-
-if dc_list.status_code == 200:
-    instanceid = None
-    for devicegroup in dc_list.json()["response"]:
-        if devicegroup["apGroupId"] == ap_group:
-            instanceid = devicegroup["instanceid"]
-            print("[*] Found instanceID {0} for AP group {1}".format(instanceid, ap_group))
-            break
-    if instanceid is None:
-        sys.exit("[!] Your AP Group couldn't be found! Keep in mind that it is case-sensitive!")
-else:
-    sys.exit("[!] Couldn't get device config from OmniVista! Exiting!")
+    if dc_list.status_code == 200:
+        instanceid = None
+        for devicegroup in dc_list.json()["response"]:
+            if devicegroup["apGroupId"] == ap_group:
+                instanceid = devicegroup["instanceid"]
+                print("    [*] Found instanceID {0} for AP group {1}".format(instanceid, ap_group))
+                break
+        if instanceid is None:
+            sys.exit("    [!] Your AP Group couldn't be found! Keep in mind that it is case-sensitive!")
+    else:
+        sys.exit("    [!] Couldn't get device config from OmniVista! Exiting!")
 
 # In this step we obtain the current configuration from the AP Group (with the previously obtained instanceid)
 # We'll look for our SSID now to modify the PSK afterwards.
 
 # TODO - There was a smarter way to do this, but I forgot
-dc_instance = "[\"{0}\"]".format(instanceid)
+    dc_instance = "[\"{0}\"]".format(instanceid)
 #dc_instance.append(instanceid)
 
-dc_config = req.post("https://{0}/api/ag/uadeviceconfig/WLANService".format(ov_hostname),
-                  headers=ov_header,
-                  data=dc_instance,
-                  #data=instanceid,
-                  #json=instanceid,
-                  verify=check_certs)
+    dc_config = req.post("https://{0}/api/ag/uadeviceconfig/WLANService".format(ov_hostname),
+                      headers=ov_header,
+                      data=dc_instance,
+                      #data=instanceid,
+                      #json=instanceid,
+                      verify=check_certs)
 
-if dc_config.status_code == 200:
-    ssid_instance = None
-    for ssid_nbr in dc_config.json()["response"]:
-        if ssid_nbr["uniqueValue"] == ssid:
-            ssid_instance = ssid_nbr["instanceid"]
-            profileinfo = ssid_nbr["profileInfo"]
-            print("[*] Found deviceId {0} for SSID {1}".format(ssid_instance, ssid))
-            break
-    if ssid_instance is None:
-        sys.exit("[!] Your SSID couldn't be found! Exiting!")
-else:
-    sys.exit("[!] Couldn't get device config (SSIDs) from OmniVista! Exiting!")
+    if dc_config.status_code == 200:
+        ssid_instance = None
+        for ssid_nbr in dc_config.json()["response"]:
+            if ssid_nbr["uniqueValue"] == ssid:
+                ssid_instance = ssid_nbr["instanceid"]
+                profileinfo = ssid_nbr["profileInfo"]
+                print("    [*] Found deviceId {0} for SSID {1}".format(ssid_instance, ssid))
+                break
+        if ssid_instance is None:
+            sys.exit("    [!] Your SSID couldn't be found! Exiting!")
+    else:
+        sys.exit("    [!] Couldn't get device config (SSIDs) from OmniVista! Exiting!")
 
 # In this step we build the json object that will update the PSK
 
-ua_update = {
+    ua_update = {
         
-        "UnifiedProfileRequestObject": {
-            "deviceRequests": [
-                {
-                    "deviceConfigId": ssid_instance,
-                    "deviceType": "AP_GROUP",
-                    "updateAttrs": {
-                        }
-                }
-                ]
-        }
-}
+            "UnifiedProfileRequestObject": {
+                "deviceRequests": [
+                    {
+                        "deviceConfigId": ssid_instance,
+                        "deviceType": "AP_GROUP",
+                        "updateAttrs": {
+                            }
+                    }
+                    ]
+            }
+    }
 
-ua_update["UnifiedProfileRequestObject"]["deviceRequests"][0]["updateAttrs"] = profileinfo
-ua_update["UnifiedProfileRequestObject"]["deviceRequests"][0]["updateAttrs"]["passphrase"] = new_psk
+    ua_update["UnifiedProfileRequestObject"]["deviceRequests"][0]["updateAttrs"] = profileinfo
+    ua_update["UnifiedProfileRequestObject"]["deviceRequests"][0]["updateAttrs"]["passphrase"] = new_psk
 
-dc_update = req.put("https://{0}/api/ag/uadeviceconfig/update/WLANService".format(ov_hostname),
-                  headers=ov_header,
-                  json=ua_update,
-                  verify=check_certs)
+    dc_update = req.put("https://{0}/api/ag/uadeviceconfig/update/WLANService".format(ov_hostname),
+                      headers=ov_header,
+                      json=ua_update,
+                      verify=check_certs)
 
 # BUG: OmniVista v4.2.2 Build 115
 # The above API responds with a faulty JSON object, thus I can't really validate the result
 
-if dc_update.status_code == 200:
-    print("[+] Changed the PSK of SSID {0} to: {1}".format(ssid, new_psk))
-else:
-    sys.exit("[!] Something went wrong while updating the PSK!")
+    if dc_update.status_code == 200:
+        print("    [+] Changed the PSK of AP GROUP {0}, SSID {1} to: {2}".format(ap_group, ssid, new_psk))
+    else:
+        sys.exit("    [!] Something went wrong while updating the PSK!")
 
 # Generate a QR code to login to this SSID
 # QR format: "WIFI:T:WPA;S:SSID;P:PSK;;"
