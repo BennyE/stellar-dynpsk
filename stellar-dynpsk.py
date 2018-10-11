@@ -27,6 +27,7 @@ except ImportError as ie:
 import json
 import random
 import urllib3
+import uuid
 
 #
 # Functions
@@ -63,6 +64,9 @@ def send_mail(email_from, email_to, ssid_name, new_psk, language,
     # 'alternative' part, so message agents can decide which they want to display.
     msgAlternative = MIMEMultipart('alternative')
     msgRoot.attach(msgAlternative)
+
+    # Generate an UUID for uniqe attachment Content-IDs
+    content_id = uuid.uuid1().hex
 
     if language == "de":
         msgText = MIMEText("""
@@ -225,15 +229,15 @@ margin-left: 15px;
 
 <ul>
 <li>
-<p><a href="https://www.al-enterprise.com/"><img src="cid:image1" height="60px"></a>
-<a href="https://www.al-enterprise.com/"><img src="cid:image3" height="75px"></a>
+<p><a href="https://www.al-enterprise.com/"><img src="cid:image1_{2}" height="60px"></a>
+<a href="https://www.al-enterprise.com/"><img src="cid:image3_{2}" height="75px"></a>
 </p>
 <p>Hallo,</p>
 
 <p>der Pre-Shared Key (PSK) f&uuml;r das WLAN <b>{0}</b> hat sich soeben ge&auml;ndert.</p>
 
 <p>Mit dem folgenden QR Code f&auml;llt die Verbindung mit dem WLAN leichter:</p>
-<p><img src="cid:image2_{1}" height="120px"></p>
+<p><img src="cid:image2_{2}" height="120px"></p>
 
 <p>Der neue PSK lautet: <b>{1}</b></p>
 <p>
@@ -243,7 +247,7 @@ Ihr ALE Stellar Wireless Team
 </li>
 </ul>
 </body></html>
-    """.format(ssid_name, new_psk)
+    """.format(ssid_name, new_psk, content_id)
     else:
         mail_content = """
 <!DOCTYPE html>
@@ -415,7 +419,8 @@ The ALE Stellar Wireless Team
     fp.close()
 
     # Define the image's ID as referenced above
-    msgImage.add_header('Content-ID', '<image1>')
+    # Avoid that the mail client can cache a previous QR code by giving a custom name
+    msgImage.add_header('Content-ID', '<image1_{0}>'.format(content_id))
     msgRoot.attach(msgImage)
 
     # QR Code
@@ -425,7 +430,7 @@ The ALE Stellar Wireless Team
 
     # Define the image's ID as referenced above
     # Avoid that the mail client can cache a previous QR code by giving a custom name
-    msgImage.add_header('Content-ID', '<image2_{0}>'.format(new_psk))
+    msgImage.add_header('Content-ID', '<image2_{0}>'.format(content_id))
     msgRoot.attach(msgImage)
 
     # Stellar Logo
@@ -434,7 +439,8 @@ The ALE Stellar Wireless Team
     fp.close()
 
     # Define the image's ID as referenced above
-    msgImage.add_header('Content-ID', '<image3>')
+    # Avoid that the mail client can cache a previous QR code by giving a custom name
+    msgImage.add_header('Content-ID', '<image3_{0}>'.format(content_id))
     msgRoot.attach(msgImage)
 
     # Send the email
