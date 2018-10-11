@@ -12,6 +12,7 @@
         "smtp_server": "smtp.gmail.com",
         "smtp_auth": "yes",
         "smtp_port": 587,
+        "smtp_user": "yourSMTPserverusername"
         "smtp_password": "passwordforsmtp",
         "language": "de",
         "email_to": "yourmailTOaddress@mailprovider.com"

@@ -33,7 +33,7 @@ import urllib3
 #
 
 def send_mail(email_from, email_to, ssid_name, new_psk, language,
-                smtp_server, smtp_auth, smtp_port, smtp_password):
+                smtp_server, smtp_auth, smtp_user, smtp_port, smtp_password):
 
     # Send an HTML email with an embedded image and a plain text message for
     # email clients that don't want to display the HTML.
@@ -446,7 +446,7 @@ The ALE Stellar Wireless Team
     if smtp_auth == "yes":
         smtp.ehlo()
         smtp.starttls()
-        smtp.login(email_from, smtp_password)
+        smtp.login(smtp_user, smtp_password)
         result = smtp.sendmail(strFrom, strTo, msgRoot.as_string())
     else:
         result = smtp.sendmail(strFrom, strTo, msgRoot.as_string())
@@ -472,6 +472,7 @@ try:
         email_from = settings["email_from"]
         smtp_server = settings["smtp_server"]
         smtp_auth = settings["smtp_auth"]
+        smtp_user = settings["smtp_user"]
         smtp_port = settings["smtp_port"]
         smtp_password = settings["smtp_password"]
         language = settings["language"]
@@ -649,7 +650,7 @@ pskqr = pyqrcode.create("WIFI:T:{0};S:{1};P:{2};;".format(encr, ssid, new_psk))
 if send_psk_via_mail == "yes":
     pskqr.png("logos/qrcode.png", scale=8)
     send_mail(email_from, email_to, ssid, new_psk, language,
-            smtp_server, smtp_auth, smtp_port, smtp_password)
+            smtp_server, smtp_auth, smtp_user, smtp_port, smtp_password)
     print("[+] Scan the QR Code sent via mail with your mobile phone and login to the network!")
 else:
     print(pskqr.terminal())
