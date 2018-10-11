@@ -27,13 +27,14 @@ except ImportError as ie:
 import json
 import random
 import urllib3
+import uuid
 
 #
 # Functions
 #
 
 def send_mail(email_from, email_to, ssid_name, new_psk, language,
-                smtp_server, smtp_auth, smtp_port, smtp_password):
+                smtp_server, smtp_auth, smtp_user, smtp_port, smtp_password):
 
     # Send an HTML email with an embedded image and a plain text message for
     # email clients that don't want to display the HTML.
@@ -63,6 +64,9 @@ def send_mail(email_from, email_to, ssid_name, new_psk, language,
     # 'alternative' part, so message agents can decide which they want to display.
     msgAlternative = MIMEMultipart('alternative')
     msgRoot.attach(msgAlternative)
+
+    # Generate an UUID for uniqe attachment Content-IDs
+    content_id = uuid.uuid1().hex
 
     if language == "de":
         msgText = MIMEText("""
@@ -225,15 +229,15 @@ margin-left: 15px;
 
 <ul>
 <li>
-<p><a href="https://www.al-enterprise.com/"><img src="cid:image1" height="60px"></a>
-<a href="https://www.al-enterprise.com/"><img src="cid:image3" height="75px"></a>
+<p><a href="https://www.al-enterprise.com/"><img src="cid:image1_{2}" height="60px"></a>
+<a href="https://www.al-enterprise.com/"><img src="cid:image3_{2}" height="75px"></a>
 </p>
 <p>Hallo,</p>
 
 <p>der Pre-Shared Key (PSK) f&uuml;r das WLAN <b>{0}</b> hat sich soeben ge&auml;ndert.</p>
 
 <p>Mit dem folgenden QR Code f&auml;llt die Verbindung mit dem WLAN leichter:</p>
-<p><img src="cid:image2_{1}" height="120px"></p>
+<p><img src="cid:image2_{2}" height="120px"></p>
 
 <p>Der neue PSK lautet: <b>{1}</b></p>
 <p>
@@ -243,7 +247,7 @@ Ihr ALE Stellar Wireless Team
 </li>
 </ul>
 </body></html>
-    """.format(ssid_name, new_psk)
+    """.format(ssid_name, new_psk, content_id)
     else:
         mail_content = """
 <!DOCTYPE html>
@@ -415,7 +419,8 @@ The ALE Stellar Wireless Team
     fp.close()
 
     # Define the image's ID as referenced above
-    msgImage.add_header('Content-ID', '<image1>')
+    # Avoid that the mail client can cache a previous QR code by giving a custom name
+    msgImage.add_header('Content-ID', '<image1_{0}>'.format(content_id))
     msgRoot.attach(msgImage)
 
     # QR Code
@@ -425,7 +430,7 @@ The ALE Stellar Wireless Team
 
     # Define the image's ID as referenced above
     # Avoid that the mail client can cache a previous QR code by giving a custom name
-    msgImage.add_header('Content-ID', '<image2_{0}>'.format(new_psk))
+    msgImage.add_header('Content-ID', '<image2_{0}>'.format(content_id))
     msgRoot.attach(msgImage)
 
     # Stellar Logo
@@ -434,7 +439,8 @@ The ALE Stellar Wireless Team
     fp.close()
 
     # Define the image's ID as referenced above
-    msgImage.add_header('Content-ID', '<image3>')
+    # Avoid that the mail client can cache a previous QR code by giving a custom name
+    msgImage.add_header('Content-ID', '<image3_{0}>'.format(content_id))
     msgRoot.attach(msgImage)
 
     # Send the email
@@ -446,7 +452,7 @@ The ALE Stellar Wireless Team
     if smtp_auth == "yes":
         smtp.ehlo()
         smtp.starttls()
-        smtp.login(email_from, smtp_password)
+        smtp.login(smtp_user, smtp_password)
         result = smtp.sendmail(strFrom, strTo, msgRoot.as_string())
     else:
         result = smtp.sendmail(strFrom, strTo, msgRoot.as_string())
@@ -464,13 +470,15 @@ try:
         ov_username = settings["ov_username"]
         ov_password = settings["ov_password"]
         validate_https_certificate = settings["validate_https_certificate"]
-        ap_group = settings["ap_group"]
+        ap_groups = settings["ap_groups"]
         ssid = settings["ssid"]
+        encr = settings["encryption"]
         psk_length = settings["psk_length"]
         send_psk_via_mail = settings["send_psk_via_mail"]
         email_from = settings["email_from"]
         smtp_server = settings["smtp_server"]
         smtp_auth = settings["smtp_auth"]
+        smtp_user = settings["smtp_user"]
         smtp_port = settings["smtp_port"]
         smtp_password = settings["smtp_password"]
         language = settings["language"]
@@ -484,7 +492,7 @@ except TypeError as te:
 
 # Try to initialise a random seed. If urandom() is not available on the system, this script will fail
 # If we don't fail, this will generate the new PSK
-letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz"
+letters = "ABCDEFGHJKMNPQRSTUVWXYZ23456789abcdefghijkmnopqrstuvwxyz"
 try:
     r = random.SystemRandom()
 except NotImplementedError as nie:
@@ -563,92 +571,93 @@ else:
 # As we want to change the configuraton LIVE, we need to work on "device config" and not the "template" in OmniVista.
 # To do that we first POST to the following URL and retrieve a bunch of instance IDs with the goal to find our AP group
 # https://omnivista.home/api/ag/deviceconfig/devices
+for ap_group in ap_groups:
+    print("[*] Working on AP GROUP {0}...".format(ap_group))
+    dc_post = {"AGRequestObject":{"objectType":"WLANService","others":{"deviceType":"AP_GROUP"}}}
 
-dc_post = {"AGRequestObject":{"objectType":"WLANService","others":{"deviceType":"AP_GROUP"}}}
+    dc_list = req.post("https://{0}/api/ag/deviceconfig/devices".format(ov_hostname),
+                      headers=ov_header,
+                      json=dc_post,
+                      verify=check_certs)
 
-dc_list = req.post("https://{0}/api/ag/deviceconfig/devices".format(ov_hostname),
-                  headers=ov_header,
-                  json=dc_post,
-                  verify=check_certs)
-
-if dc_list.status_code == 200:
-    instanceid = None
-    for devicegroup in dc_list.json()["response"]:
-        if devicegroup["apGroupId"] == ap_group:
-            instanceid = devicegroup["instanceid"]
-            print("[*] Found instanceID {0} for AP group {1}".format(instanceid, ap_group))
-            break
-    if instanceid is None:
-        sys.exit("[!] Your AP Group couldn't be found! Keep in mind that it is case-sensitive!")
-else:
-    sys.exit("[!] Couldn't get device config from OmniVista! Exiting!")
+    if dc_list.status_code == 200:
+        instanceid = None
+        for devicegroup in dc_list.json()["response"]:
+            if devicegroup["apGroupId"] == ap_group:
+                instanceid = devicegroup["instanceid"]
+                print("    [*] Found instanceID {0} for AP group {1}".format(instanceid, ap_group))
+                break
+        if instanceid is None:
+            sys.exit("    [!] Your AP Group couldn't be found! Keep in mind that it is case-sensitive!")
+    else:
+        sys.exit("    [!] Couldn't get device config from OmniVista! Exiting!")
 
 # In this step we obtain the current configuration from the AP Group (with the previously obtained instanceid)
 # We'll look for our SSID now to modify the PSK afterwards.
 
 # TODO - There was a smarter way to do this, but I forgot
-dc_instance = "[\"{0}\"]".format(instanceid)
+    dc_instance = "[\"{0}\"]".format(instanceid)
 #dc_instance.append(instanceid)
 
-dc_config = req.post("https://{0}/api/ag/uadeviceconfig/WLANService".format(ov_hostname),
-                  headers=ov_header,
-                  data=dc_instance,
-                  #data=instanceid,
-                  #json=instanceid,
-                  verify=check_certs)
+    dc_config = req.post("https://{0}/api/ag/uadeviceconfig/WLANService".format(ov_hostname),
+                      headers=ov_header,
+                      data=dc_instance,
+                      #data=instanceid,
+                      #json=instanceid,
+                      verify=check_certs)
 
-if dc_config.status_code == 200:
-    ssid_instance = None
-    for ssid_nbr in dc_config.json()["response"]:
-        if ssid_nbr["uniqueValue"] == ssid:
-            ssid_instance = ssid_nbr["instanceid"]
-            profileinfo = ssid_nbr["profileInfo"]
-            print("[*] Found deviceId {0} for SSID {1}".format(ssid_instance, ssid))
-            break
-    if ssid_instance is None:
-        sys.exit("[!] Your SSID couldn't be found! Exiting!")
-else:
-    sys.exit("[!] Couldn't get device config (SSIDs) from OmniVista! Exiting!")
+    if dc_config.status_code == 200:
+        ssid_instance = None
+        for ssid_nbr in dc_config.json()["response"]:
+            if ssid_nbr["uniqueValue"] == ssid:
+                ssid_instance = ssid_nbr["instanceid"]
+                profileinfo = ssid_nbr["profileInfo"]
+                print("    [*] Found deviceId {0} for SSID {1}".format(ssid_instance, ssid))
+                break
+        if ssid_instance is None:
+            sys.exit("    [!] Your SSID couldn't be found! Exiting!")
+    else:
+        sys.exit("    [!] Couldn't get device config (SSIDs) from OmniVista! Exiting!")
 
 # In this step we build the json object that will update the PSK
 
-ua_update = {
+    ua_update = {
         
-        "UnifiedProfileRequestObject": {
-            "deviceRequests": [
-                {
-                    "deviceConfigId": ssid_instance,
-                    "deviceType": "AP_GROUP",
-                    "updateAttrs": {
-                        }
-                }
-                ]
-        }
-}
+            "UnifiedProfileRequestObject": {
+                "deviceRequests": [
+                    {
+                        "deviceConfigId": ssid_instance,
+                        "deviceType": "AP_GROUP",
+                        "updateAttrs": {
+                            }
+                    }
+                    ]
+            }
+    }
 
-ua_update["UnifiedProfileRequestObject"]["deviceRequests"][0]["updateAttrs"] = profileinfo
-ua_update["UnifiedProfileRequestObject"]["deviceRequests"][0]["updateAttrs"]["passphrase"] = new_psk
+    ua_update["UnifiedProfileRequestObject"]["deviceRequests"][0]["updateAttrs"] = profileinfo
+    ua_update["UnifiedProfileRequestObject"]["deviceRequests"][0]["updateAttrs"]["passphrase"] = new_psk
 
-dc_update = req.put("https://{0}/api/ag/uadeviceconfig/update/WLANService".format(ov_hostname),
-                  headers=ov_header,
-                  json=ua_update,
-                  verify=check_certs)
+    dc_update = req.put("https://{0}/api/ag/uadeviceconfig/update/WLANService".format(ov_hostname),
+                      headers=ov_header,
+                      json=ua_update,
+                      verify=check_certs)
 
 # BUG: OmniVista v4.2.2 Build 115
 # The above API responds with a faulty JSON object, thus I can't really validate the result
 
-if dc_update.status_code == 200:
-    print("[+] Changed the PSK of SSID {0} to: {1}".format(ssid, new_psk))
-else:
-    sys.exit("[!] Something went wrong while updating the PSK!")
+    if dc_update.status_code == 200:
+        print("    [+] Changed the PSK of AP GROUP {0}, SSID {1} to: {2}".format(ap_group, ssid, new_psk))
+    else:
+        sys.exit("    [!] Something went wrong while updating the PSK!")
 
 # Generate a QR code to login to this SSID
 # QR format: "WIFI:T:WPA;S:SSID;P:PSK;;"
-pskqr = pyqrcode.create("WIFI:T:WPA/WPA2;S:{0};P:{1};;".format(ssid, new_psk))
+pskqr = pyqrcode.create("WIFI:T:{0};S:{1};P:{2};;".format(encr, ssid, new_psk))
 if send_psk_via_mail == "yes":
     pskqr.png("logos/qrcode.png", scale=8)
     send_mail(email_from, email_to, ssid, new_psk, language,
-            smtp_server, smtp_auth, smtp_port, smtp_password)
+            smtp_server, smtp_auth, smtp_user, smtp_port, smtp_password)
     print("[+] Scan the QR Code sent via mail with your mobile phone and login to the network!")
 else:
     print(pskqr.terminal())
