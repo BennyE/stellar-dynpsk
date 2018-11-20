@@ -445,9 +445,10 @@ The ALE Stellar Wireless Team
 
     # Send the email
     import smtplib
-    smtp = smtplib.SMTP()
+    # Fix for issue # 2 - Python3 SMTP ValueError: server_hostname cannot be an empty string or start with a leading dot 
+    smtp = smtplib.SMTP(host=smtp_server, port=smtp_port)
     smtp.set_debuglevel(0)
-    smtp.connect("{0}:{1}".format(smtp_server, smtp_port))
+    smtp.connect(host=smtp_server, port=smtp_port)
 
     if smtp_auth == "yes":
         smtp.ehlo()
